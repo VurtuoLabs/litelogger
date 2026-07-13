@@ -1,0 +1,20 @@
+<template>
+    <lightning-card title={cardTitle} icon-name="custom:custom53">
+        <div class="slds-p-horizontal_medium slds-p-bottom_medium">
+            <template lwc:if={hasEntries}>
+                <lightning-datatable
+                    key-field="Id"
+                    data={entries}
+                    columns={columns}
+                    hide-checkbox-column
+                ></lightning-datatable>
+            </template>
+            <template lwc:elseif={error}>
+                <p class="slds-text-color_error">{error}</p>
+            </template>
+            <template lwc:else>
+                <p class="slds-text-color_weak">No log entries reference this record.</p>
+            </template>
+        </div>
+    </lightning-card>
+</template>

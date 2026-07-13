@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Hot tier: recent log entries (default last 7 days) for reports, dashboards, and real-time triage. Aged into LogEntryArchive__b then deleted.</description>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <label>Log Entry</label>
+    <pluralLabel>Log Entries</pluralLabel>
+    <nameField>
+        <displayFormat>LE-{0000000000}</displayFormat>
+        <label>Log Entry Number</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <sharingModel>Private</sharingModel>
+</CustomObject>
