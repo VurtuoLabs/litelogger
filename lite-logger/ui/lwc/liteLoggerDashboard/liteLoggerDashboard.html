@@ -1,0 +1,56 @@
+<template>
+    <lightning-card title="LiteLogger" icon-name="custom:custom53">
+        <lightning-button-icon
+            slot="actions"
+            icon-name="utility:refresh"
+            alternative-text="Refresh"
+            title="Refresh"
+            onclick={handleRefresh}
+        ></lightning-button-icon>
+
+        <div class="slds-p-horizontal_medium slds-p-bottom_medium">
+            <!-- Summary tiles: last 7 days by level -->
+            <div class="slds-grid slds-wrap slds-gutters slds-m-bottom_medium">
+                <template for:each={summaryTiles} for:item="tile">
+                    <div key={tile.label} class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4 slds-m-bottom_small">
+                        <div class="slds-box slds-box_small slds-text-align_center">
+                            <div class={tile.valueClass}>{tile.value}</div>
+                            <div class="slds-text-title">{tile.label}</div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Level filter -->
+            <div class="slds-m-bottom_small">
+                <lightning-combobox
+                    name="levelFilter"
+                    label="Filter by level"
+                    variant="label-hidden"
+                    value={levelFilter}
+                    options={levelOptions}
+                    onchange={handleLevelChange}
+                ></lightning-combobox>
+            </div>
+
+            <!-- Recent entries -->
+            <template lwc:if={hasEntries}>
+                <lightning-datatable
+                    key-field="Id"
+                    data={entries}
+                    columns={columns}
+                    hide-checkbox-column
+                    show-row-number-column
+                ></lightning-datatable>
+            </template>
+            <template lwc:elseif={error}>
+                <p class="slds-text-color_error slds-m-top_medium">{error}</p>
+            </template>
+            <template lwc:else>
+                <p class="slds-text-color_weak slds-text-align_center slds-m-top_medium">
+                    No log entries in the hot tier. Call Logger.saveLog() from Apex to see entries here.
+                </p>
+            </template>
+        </div>
+    </lightning-card>
+</template>

@@ -1,0 +1,15 @@
+{
+  "packageDirectories": [
+    {
+      "path": "lite-logger",
+      "default": true,
+      "package": "LiteLogger",
+      "versionName": "v0.2.0",
+      "versionNumber": "0.2.0.NEXT"
+    }
+  ],
+  "name": "LiteLogger",
+  "namespace": "",
+  "sfdcLoginUrl": "https://login.salesforce.com",
+  "sourceApiVersion": "62.0"
+}

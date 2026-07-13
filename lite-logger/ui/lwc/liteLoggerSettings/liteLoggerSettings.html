@@ -1,0 +1,91 @@
+<template>
+    <lightning-card title="LiteLogger Settings" icon-name="utility:settings">
+        <div class="slds-p-horizontal_medium slds-p-bottom_medium">
+            <template lwc:if={draft}>
+                <div class="slds-grid slds-wrap slds-gutters">
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
+                        <lightning-input
+                            type="toggle"
+                            label="Logging enabled"
+                            checked={draft.isEnabled}
+                            data-field="isEnabled"
+                            onchange={handleToggle}
+                        ></lightning-input>
+                        <lightning-combobox
+                            label="Minimum logging level"
+                            value={draft.loggingLevel}
+                            options={levelOptions}
+                            data-field="loggingLevel"
+                            onchange={handleValue}
+                            class="slds-m-top_medium"
+                        ></lightning-combobox>
+                        <lightning-input
+                            type="toggle"
+                            label="Mask sensitive data (card numbers, SSNs)"
+                            checked={draft.applyDataMasking}
+                            data-field="applyDataMasking"
+                            onchange={handleToggle}
+                            class="slds-m-top_medium"
+                        ></lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
+                        <lightning-input
+                            type="toggle"
+                            label="Store entries in hot tier"
+                            checked={draft.storeInHotTier}
+                            data-field="storeInHotTier"
+                            onchange={handleToggle}
+                        ></lightning-input>
+                        <lightning-input
+                            type="number"
+                            label="Hot tier retention (days)"
+                            value={draft.hotTierRetentionDays}
+                            min="1"
+                            max="30"
+                            data-field="hotTierRetentionDays"
+                            onchange={handleValue}
+                            class="slds-m-top_medium"
+                        ></lightning-input>
+                        <lightning-input
+                            type="number"
+                            label="Cold tier retention (days, 0 = keep forever)"
+                            value={draft.coldTierRetentionDays}
+                            min="0"
+                            data-field="coldTierRetentionDays"
+                            onchange={handleValue}
+                            class="slds-m-top_medium"
+                        ></lightning-input>
+                    </div>
+                </div>
+
+                <div class="slds-m-top_medium">
+                    <lightning-button
+                        variant="brand"
+                        label="Save Org Defaults"
+                        onclick={handleSave}
+                        disabled={saving}
+                    ></lightning-button>
+                </div>
+
+                <div class="slds-box slds-box_small slds-m-top_medium">
+                    <p class="slds-text-title slds-m-bottom_small">Nightly Archive Job</p>
+                    <template lwc:if={archiveScheduled}>
+                        <lightning-badge label="Scheduled - runs nightly at 1 AM"></lightning-badge>
+                    </template>
+                    <template lwc:else>
+                        <p class="slds-text-color_weak slds-m-bottom_small">
+                            Not scheduled. Without it, aged entries stay in expensive standard storage.
+                        </p>
+                        <lightning-button
+                            label="Schedule Nightly Archive"
+                            onclick={handleSchedule}
+                        ></lightning-button>
+                    </template>
+                </div>
+            </template>
+            <template lwc:elseif={error}>
+                <p class="slds-text-color_error">{error}</p>
+            </template>
+        </div>
+    </lightning-card>
+</template>

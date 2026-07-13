@@ -1,0 +1,10 @@
+{
+  "orgName": "LiteLogger Dev",
+  "edition": "Developer",
+  "features": ["BigObjects", "PlatformEventsDeploy"],
+  "settings": {
+    "lightningExperienceSettings": {
+      "enableS1DesktopEnabled": true
+    }
+  }
+}
