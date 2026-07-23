@@ -2,7 +2,7 @@
 
 **The lean, low-footprint logger for Salesforce SMBs.**
 
-Rollback-safe, queryable logging — without the storage bill or the setup burden of enterprise loggers. Install it, and you get durable error logs that don't blow up your Salesforce data storage.
+Rollback-safe, queryable logging, without the storage bill or the setup burden of enterprise loggers. Install it, and you get durable error logs that don't blow up your Salesforce data storage.
 
 ## Why
 
@@ -10,20 +10,20 @@ Native `System.debug()` is ephemeral, not queryable, and lost on rollback. Enter
 
 LiteLogger keeps the good idea and drops the cost:
 
-- **Big Object primary storage** — full log history at ~0 standard-storage cost.
-- **Tiny hot tier** — only the last ~7 days live in a reportable custom object; the rest is auto-archived nightly.
-- **Rollback-safe** — logs are published as platform events immediately, so a failed transaction can't take its own error logs down with it.
-- **Install-and-go** — opinionated defaults, one settings object, data masking on by default. No CMDT, no plugins, no permission-set matrix.
+- **Big Object primary storage**, full log history at ~0 standard-storage cost.
+- **Tiny hot tier**, only the last ~7 days live in a reportable custom object; the rest is auto-archived nightly.
+- **Rollback-safe**, logs are published as platform events immediately, so a failed transaction can't take its own error logs down with it.
+- **Install-and-go**, opinionated defaults, one settings object, data masking on by default. No CMDT, no plugins, no permission-set matrix.
 
 ## Tech stack
 
 | Layer | Technology |
 |---|---|
-| Language | Apex (API v62.0), 100% native — zero external dependencies |
+| Language | Apex (API v62.0), 100% native, zero external dependencies |
 | Transport | Platform Events (`LogEntryEvent__e`, HighVolume, `PublishImmediately`) |
-| Hot storage | Custom object (`LogEntry__c`) — reportable, searchable, private OWD |
-| Cold storage | Big Object (`LogEntryArchive__b`) — composite index, near-zero storage cost |
-| Configuration | Hierarchy Custom Setting (`LoggerSettings__c`) — org/profile/user overrides |
+| Hot storage | Custom object (`LogEntry__c`), reportable, searchable, private OWD |
+| Cold storage | Big Object (`LogEntryArchive__b`), composite index, near-zero storage cost |
+| Configuration | Hierarchy Custom Setting (`LoggerSettings__c`), org/profile/user overrides |
 | Async processing | Batch Apex + chained Queueables (transaction-split Big Object DML) |
 | UI | Lightning Web Components + Lightning Base Components (SLDS v2, linter-clean) |
 | App shell | Lightning App + FlexiPages (App Pages) + Custom Tabs |
@@ -39,7 +39,7 @@ Logger.error('...')                     ← slim fluent API (Apex)
 Logger.saveLog()  ──publish──►  Event Bus    PublishImmediately = survives rollback
                                     │
                      LogEntryEvent trigger (separate transaction,
-                     runs as Automated Process — reads per-event
+                     runs as Automated Process, reads per-event
                      flags stamped by the publishing user)
                                     │
                     ┌───────────────┴────────────────┐
@@ -56,7 +56,7 @@ Logger.saveLog()  ──publish──►  Event Bus    PublishImmediately = surv
                            past cold retention (self-chaining)
 ```
 
-Big Object DML and standard DML can't share a transaction — the archive pipeline splits each phase into its own transaction, and re-archival is idempotent because archive rows are keyed by their index.
+Big Object DML and standard DML can't share a transaction, the archive pipeline splits each phase into its own transaction, and re-archival is idempotent because archive rows are keyed by their index.
 
 Full design rationale, footprint math, and component inventory: [ARCHITECTURE.md](ARCHITECTURE.md).
 
@@ -73,11 +73,11 @@ Full design rationale, footprint math, and component inventory: [ARCHITECTURE.md
 
 - [Salesforce CLI](https://developer.salesforce.com/tools/salesforcecli) (`sf` v2+)
 - A target org: scratch org, Developer Edition, Trailhead Playground, or sandbox
-- Org must support **Big Objects** and **Platform Events** (all modern editions do; scratch orgs need the `BigObjects` feature — already declared in [config/project-scratch-def.json](config/project-scratch-def.json))
+- Org must support **Big Objects** and **Platform Events** (all modern editions do; scratch orgs need the `BigObjects` feature, already declared in [config/project-scratch-def.json](config/project-scratch-def.json))
 
 ## Deployment
 
-### Option A — scratch org
+### Option A, scratch org
 
 ```bash
 sf org create scratch -f config/project-scratch-def.json -a litelogger -d
@@ -86,7 +86,7 @@ sf org assign permset -n LiteLogger_Admin -o litelogger
 sf apex run test --class-names LiteLoggerTest -o litelogger --wait 10 --code-coverage
 ```
 
-### Option B — Dev org / Trailhead Playground / sandbox (manifest deploy)
+### Option B, Dev org / Trailhead Playground / sandbox (manifest deploy)
 
 ```bash
 # 1. Authenticate (use https://test.salesforce.com for sandboxes)
@@ -111,7 +111,7 @@ sf apex run test --class-names LiteLoggerTest -o litelogger-dev --wait 10 --code
 
 1. Open the app: `sf org open -o litelogger-dev -p /lightning/app/c__LiteLogger`
 2. Go to the **Settings** tab → review org defaults (level, retention, masking) → **Save Org Defaults**
-3. Click **Schedule Nightly Archive** — this activates the hot→cold tiering (1 AM daily). Without it, aged entries stay in standard storage and the cost story doesn't kick in.
+3. Click **Schedule Nightly Archive**, this activates the hot→cold tiering (1 AM daily). Without it, aged entries stay in standard storage and the cost story doesn't kick in.
 4. Optional: in App Builder, drop the **Related Log Entries** component onto any record page (Account, Case, custom objects…).
 
 No CMDT records, no remote site settings, no named credentials, no post-install scripts.
@@ -124,16 +124,16 @@ sf apex run --file /tmp/smoke.apex -o litelogger-dev
 sf data query -q "SELECT LoggingLevel__c, Message__c, Tags__c FROM LogEntry__c ORDER BY Timestamp__c DESC LIMIT 3" -o litelogger-dev
 ```
 
-Expected: an `ERROR` row whose message reads `...card ***CARD***` — proof the event → subscriber → masking pipeline works.
+Expected: an `ERROR` row whose message reads `...card ***CARD***`, proof the event → subscriber → masking pipeline works.
 
 ### Deployment troubleshooting
 
 | Symptom | Cause / fix |
 |---|---|
 | `Permission Delete depends on permission(s): Edit` | Object perms need Edit granted alongside Delete (already fixed in the shipped permsets) |
-| `You cannot deploy to a required field: LogEntryArchive__b.*` | Required Big Object index fields can't carry FLS entries — don't add `fieldPermissions` for `Timestamp__c`, `TransactionId__c`, `TransactionEntryNumber__c` |
-| Big Object index errors | Index fields must be `required`, text fields in the index ≤100 chars total, and the index can't be edited after deploy — changing it requires deleting the Big Object first |
-| Entries not appearing after `saveLog()` | Platform events deliver asynchronously — allow a few seconds. Check Setup → Platform Events for the subscription state of the `LogEntryEvent` trigger |
+| `You cannot deploy to a required field: LogEntryArchive__b.*` | Required Big Object index fields can't carry FLS entries, don't add `fieldPermissions` for `Timestamp__c`, `TransactionId__c`, `TransactionEntryNumber__c` |
+| Big Object index errors | Index fields must be `required`, text fields in the index ≤100 chars total, and the index can't be edited after deploy, changing it requires deleting the Big Object first |
+| Entries not appearing after `saveLog()` | Platform events deliver asynchronously, allow a few seconds. Check Setup → Platform Events for the subscription state of the `LogEntryEvent` trigger |
 | Logging silently off | Check the Settings tab: a settings record with `IsEnabled__c = false` disables logging for that scope (org/profile/user) |
 
 ## Usage
@@ -141,7 +141,7 @@ Expected: an `ERROR` row whose message reads `...card ***CARD***` — proof the 
 ### Apex
 
 ```apex
-// Level methods: error / warn / info / debug / fine — each buffers an entry
+// Level methods: error / warn / info / debug / fine, each buffers an entry
 Logger.error('Payment failed', paymentId);              // attach a record ID
 Logger.warn('Retrying gateway').addTag('billing');      // fluent tagging
 
@@ -152,15 +152,15 @@ try {
 }
 
 Logger.setScenario('Nightly ERP Sync');                 // group a whole transaction
-Logger.saveLog();                                       // publish — survives rollback
+Logger.saveLog();                                       // publish, survives rollback
 ```
 
 Entries below the configured level become no-op builders (safe to chain, nothing buffered). Sensitive data (card numbers, SSNs) is masked by default before storage.
 
 ### UI
 
-- **LiteLogger app** — Home (summary tiles + filterable recent entries), Log Entries (full object tab: list views, reports), Settings (org defaults + archive scheduling, zero anonymous Apex)
-- **Related Log Entries** — record-page component showing entries captured against the current record
+- **LiteLogger app**, Home (summary tiles + filterable recent entries), Log Entries (full object tab: list views, reports), Settings (org defaults + archive scheduling, zero anonymous Apex)
+- **Related Log Entries**, record-page component showing entries captured against the current record
 
 ## Project structure
 
@@ -179,4 +179,4 @@ LiteLogger/
 
 ## Status
 
-`v0.2.0` — deployed and verified against a live dev org: 79/79 components, 11/11 tests passing, end-to-end smoke test (publish → subscribe → mask → store) confirmed. Alerting and Flow/LWC capture entry points are on the [roadmap](ARCHITECTURE.md#roadmap).
+`v0.2.0`, deployed and verified against a live dev org: 79/79 components, 11/11 tests passing, end-to-end smoke test (publish → subscribe → mask → store) confirmed. Alerting and Flow/LWC capture entry points are on the [roadmap](ARCHITECTURE.md#roadmap).
