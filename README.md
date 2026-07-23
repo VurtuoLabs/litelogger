@@ -180,3 +180,7 @@ LiteLogger/
 ## Status
 
 `v0.2.0`, deployed and verified against a live dev org: 79/79 components, 11/11 tests passing, end-to-end smoke test (publish → subscribe → mask → store) confirmed. Alerting and Flow/LWC capture entry points are on the [roadmap](ARCHITECTURE.md#roadmap).
+
+## License
+
+[MIT](LICENSE) © 2026 VurtuoLabs
