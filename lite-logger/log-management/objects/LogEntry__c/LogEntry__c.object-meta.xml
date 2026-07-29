@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <!-- Assigns LogEntry_Record_Page as the ORG DEFAULT record page. Without this
+         override the FlexiPage exists but no user ever sees it. -->
+    <actionOverrides>
+        <actionName>View</actionName>
+        <comment>LiteLogger: open log entries on the triage-first Lightning record page.</comment>
+        <content>LogEntry_Record_Page</content>
+        <formFactor>Large</formFactor>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Flexipage</type>
+    </actionOverrides>
+    <compactLayoutAssignment>Log_Entry_Triage</compactLayoutAssignment>
     <deploymentStatus>Deployed</deploymentStatus>
     <description>Hot tier: recent log entries (default last 7 days) for reports, dashboards, and real-time triage. Aged into LogEntryArchive__b then deleted.</description>
     <enableReports>true</enableReports>

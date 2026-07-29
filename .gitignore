@@ -5,3 +5,5 @@ deploy-options.json
 node_modules/
 *.log
 .DS_Store
+
+.claude/

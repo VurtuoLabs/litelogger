@@ -78,9 +78,10 @@ Logger.saveLog()  ──publish──►  event bus   (PublishImmediately = roll
 
 ### UI (`lite-logger/ui`)
 - **`LiteLogger` Lightning app**, three tabs: Home (dashboard), Log Entries (object tab), Settings.
-- **`liteLoggerDashboard` LWC**, level summary tiles (7d) + filterable recent-entries table.
-- **`relatedLogEntries` LWC**, drop on any record page to see entries captured against that record.
-- **`liteLoggerSettings` LWC**, org-default settings form + one-click nightly archive scheduling (no anonymous Apex needed).
+- **`liteLoggerDashboard` LWC**, monitoring console: ERROR-first KPI strip with trailing-window trends, severity mix chart, filter bar (window / level / rows / search), and the entry stream.
+- **`relatedLogEntries` LWC**, drop on any record page to see entries captured against that record, with severity chips that double as the summary strip and level filter.
+- **`liteLoggerSettings` LWC**, grouped settings with an effective-configuration banner, field-level validation, dirty tracking, confirmation before destructive changes, and one-click nightly archive scheduling (no anonymous Apex needed).
+- **Shared UI layer**, `liteLoggerLogStream` (severity-gutter log stream: sorting, paging, in-place entry detail, row actions, keyboard traversal), `liteLoggerKpiCard`, `liteLoggerSeverityBadge`, `liteLoggerSectionHeader`, `liteLoggerEmptyState`, `liteLoggerErrorState`, `liteLoggerSkeleton`, and the `liteLoggerLogUtils` service module (severity vocabulary, row view-model, error humanisation). Severity is always encoded as shape + icon + label, never colour alone.
 - **Permission sets**, `LiteLogger_Admin` (manage/delete, archive read, settings; settings writes also require Customize Application) and `LiteLogger_Viewer` (read-only dashboard). Both include full FLS.
 
 ## Roadmap

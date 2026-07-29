@@ -1,0 +1,12 @@
+<template>
+    <span class={badgeClass} title={title}>
+        <span class={shapeClass} aria-hidden="true"></span>
+        <template lwc:if={shouldShowIcon}>
+            <lightning-icon icon-name={iconName} size="xx-small" class="ll-badge__icon"></lightning-icon>
+        </template>
+        <span class="ll-badge__label">{displayLabel}</span>
+        <template lwc:if={hasCount}>
+            <span class="ll-badge__count">{count}</span>
+        </template>
+    </span>
+</template>

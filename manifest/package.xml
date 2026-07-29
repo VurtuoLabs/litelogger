@@ -17,6 +17,10 @@
         <name>ApexTrigger</name>
     </types>
     <types>
+        <members>LogEntry__c.Log_Entry_Triage</members>
+        <name>CompactLayout</name>
+    </types>
+    <types>
         <members>LiteLogger</members>
         <name>CustomApplication</name>
     </types>
@@ -92,13 +96,26 @@
     <types>
         <members>LiteLogger_Home</members>
         <members>LiteLogger_Settings</members>
+        <members>LogEntry_Record_Page</members>
         <name>FlexiPage</name>
     </types>
     <types>
         <members>liteLoggerDashboard</members>
+        <members>liteLoggerEmptyState</members>
+        <members>liteLoggerErrorState</members>
+        <members>liteLoggerKpiCard</members>
+        <members>liteLoggerLogStream</members>
+        <members>liteLoggerLogUtils</members>
+        <members>liteLoggerSectionHeader</members>
         <members>liteLoggerSettings</members>
+        <members>liteLoggerSeverityBadge</members>
+        <members>liteLoggerSkeleton</members>
         <members>relatedLogEntries</members>
         <name>LightningComponentBundle</name>
+    </types>
+    <types>
+        <members>LogEntry__c.All</members>
+        <name>ListView</name>
     </types>
     <types>
         <members>LiteLogger_Admin</members>

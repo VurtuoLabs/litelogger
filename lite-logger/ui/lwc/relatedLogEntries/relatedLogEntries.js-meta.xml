@@ -3,8 +3,27 @@
     <apiVersion>62.0</apiVersion>
     <isExposed>true</isExposed>
     <masterLabel>Related Log Entries</masterLabel>
-    <description>Shows LiteLogger entries captured against the current record. Add to any record page.</description>
+    <description>Shows LiteLogger entries captured against the current record as a severity-gutter stream. Add to any record page.</description>
     <targets>
         <target>lightning__RecordPage</target>
     </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__RecordPage">
+            <property
+                name="headline"
+                type="String"
+                label="Panel title"
+                description="Heading shown at the top of the panel."
+                default="Log entries"
+            />
+            <property
+                name="pageSize"
+                type="String"
+                datasource="5,10,25"
+                label="Rows per page"
+                description="Entries rendered per page before paging."
+                default="10"
+            />
+        </targetConfig>
+    </targetConfigs>
 </LightningComponentBundle>

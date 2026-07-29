@@ -1,91 +1,396 @@
 <template>
-    <lightning-card title="LiteLogger Settings" icon-name="utility:settings">
-        <div class="slds-p-horizontal_medium slds-p-bottom_medium">
-            <template lwc:if={draft}>
-                <div class="slds-grid slds-wrap slds-gutters">
-                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
-                        <lightning-input
-                            type="toggle"
-                            label="Logging enabled"
-                            checked={draft.isEnabled}
-                            data-field="isEnabled"
-                            onchange={handleToggle}
-                        ></lightning-input>
-                        <lightning-combobox
-                            label="Minimum logging level"
-                            value={draft.loggingLevel}
-                            options={levelOptions}
-                            data-field="loggingLevel"
-                            onchange={handleValue}
-                            class="slds-m-top_medium"
-                        ></lightning-combobox>
+    <div class="ll-console">
+        <!-- ------------------------------------------------ header -->
+        <header class="ll-console__head">
+            <div class="ll-console__identity">
+                <p class="ll-console__eyebrow">LiteLogger · configuration</p>
+                <h2 class="ll-console__title">Logger settings</h2>
+            </div>
+            <p class="ll-console__hint">
+                Org-wide defaults. Profile and user overrides can still be set in Setup → Custom Settings.
+            </p>
+        </header>
+
+        <!-- ------------------------------------------------ load error -->
+        <template lwc:if={loadError}>
+            <div class="ll-console__section">
+                <c-lite-logger-error-state
+                    heading="Settings unavailable"
+                    message={loadError.message}
+                    detail={loadError.detail}
+                    retry-label="Reload settings"
+                    onretry={handleRetryLoad}
+                ></c-lite-logger-error-state>
+            </div>
+        </template>
+
+        <!-- ------------------------------------------------ skeleton -->
+        <template lwc:elseif={isLoading}>
+            <div class="ll-console__section">
+                <div class="ll-skelhero"></div>
+                <div class="ll-grid">
+                    <div>
+                        <c-lite-logger-skeleton
+                            variant="field"
+                            count="3"
+                            label="Loading LiteLogger settings…"
+                        ></c-lite-logger-skeleton>
+                    </div>
+                    <div>
+                        <c-lite-logger-skeleton variant="field" count="3" label=""></c-lite-logger-skeleton>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- ------------------------------------------------ form -->
+        <template lwc:else>
+            <!-- Effective configuration: the decision-critical fact on this page -->
+            <div class="ll-console__section">
+                <div class={statusClass} role="status">
+                    <span class="ll-hero__icon">
+                        <lightning-icon
+                            icon-name={statusIcon}
+                            size="small"
+                            alternative-text=""
+                        ></lightning-icon>
+                    </span>
+                    <div class="ll-hero__copy">
+                        <p class="ll-hero__label">{statusLabel}</p>
+                        <p class="ll-hero__detail">{statusDetail}</p>
+                    </div>
+                    <span class={dirtyPillClass}>
+                        <lightning-icon
+                            icon-name={dirtyPillIcon}
+                            size="xx-small"
+                            alternative-text=""
+                            class="ll-flag__icon"
+                        ></lightning-icon>
+                        {dirtyPillLabel}
+                    </span>
+                </div>
+
+                <template lwc:if={showSavedConfirmation}>
+                    <div class="ll-alert ll-alert_success" role="status">
+                        <lightning-icon
+                            icon-name="utility:success"
+                            size="xx-small"
+                            alternative-text="Saved"
+                            class="ll-alert__icon"
+                        ></lightning-icon>
+                        <span>{savedConfirmationText}</span>
+                    </div>
+                </template>
+
+                <template lwc:if={saveError}>
+                    <c-lite-logger-error-state
+                        compact="true"
+                        heading="Settings were not saved"
+                        message={saveError.message}
+                        detail={saveError.detail}
+                        show-retry="false"
+                        class="ll-alert-block"
+                    ></c-lite-logger-error-state>
+                </template>
+            </div>
+
+            <!-- ------------------------------ capture -->
+            <section class="ll-console__section">
+                <c-lite-logger-section-header
+                    heading="Capture"
+                    description="What gets logged, and at which level. Entries below the threshold never reach the event bus."
+                    collapsible="true"
+                    expanded={expanded.capture}
+                    controls={captureSectionId}
+                    data-section="capture"
+                    ontoggle={handleToggleSection}
+                ></c-lite-logger-section-header>
+
+                <template lwc:if={expanded.capture}>
+                    <div id="ll-section-capture" class="ll-section__body">
+                        <div class="ll-grid">
+                            <div class="ll-field">
+                                <lightning-input
+                                    type="toggle"
+                                    label="Logging enabled"
+                                    message-toggle-active="On"
+                                    message-toggle-inactive="Off"
+                                    field-level-help="When off, every Logger call becomes a no-op for all users in this org."
+                                    checked={draft.isEnabled}
+                                    data-field="isEnabled"
+                                    onchange={handleToggle}
+                                ></lightning-input>
+
+                                <lightning-combobox
+                                    label="Minimum logging level"
+                                    field-level-help="Entries at this level and above are captured. Everything more verbose is dropped in Apex, before any DML."
+                                    value={draft.loggingLevel}
+                                    options={levelOptions}
+                                    data-field="loggingLevel"
+                                    onchange={handleValue}
+                                    class="ll-field__control"
+                                ></lightning-combobox>
+                            </div>
+
+                            <div class="ll-field">
+                                <p class="ll-field__label">Effect of this threshold</p>
+                                <ul class="ll-ladder" role="list">
+                                    <template for:each={levelLadder} for:item="step">
+                                        <li key={step.level} class={step.rowClass}>
+                                            <c-lite-logger-severity-badge
+                                                severity={step.level}
+                                                size="small"
+                                            ></c-lite-logger-severity-badge>
+                                            <span class="ll-ladder__state">{step.stateLabel}</span>
+                                        </li>
+                                    </template>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </section>
+
+            <!-- ------------------------------ storage & retention -->
+            <section class="ll-console__section">
+                <c-lite-logger-section-header
+                    heading="Storage & retention"
+                    description="The hot tier is queryable but uses standard storage; the archive Big Object is effectively free. Retention controls how long each keeps an entry."
+                    collapsible="true"
+                    expanded={expanded.storage}
+                    controls={storageSectionId}
+                    data-section="storage"
+                    ontoggle={handleToggleSection}
+                ></c-lite-logger-section-header>
+
+                <template lwc:if={expanded.storage}>
+                    <div id="ll-section-storage" class="ll-section__body">
+                        <div class="ll-grid">
+                            <div class="ll-field">
+                                <lightning-input
+                                    type="toggle"
+                                    label="Store entries in the hot tier"
+                                    message-toggle-active="On"
+                                    message-toggle-inactive="Off"
+                                    field-level-help="The hot tier (LogEntry__c) is what powers this console, reports and list views. Turning it off sends entries straight to the archive."
+                                    checked={draft.storeInHotTier}
+                                    data-field="storeInHotTier"
+                                    onchange={handleToggle}
+                                ></lightning-input>
+                            </div>
+                            <div class="ll-field">
+                                <lightning-input
+                                    type="number"
+                                    label="Hot tier retention (days)"
+                                    value={draft.hotTierRetentionDays}
+                                    min={hotMin}
+                                    max={hotMax}
+                                    step="1"
+                                    required
+                                    field-level-help="How long entries stay queryable before the nightly job archives them. 1–30 days."
+                                    data-field="hotTierRetentionDays"
+                                    onchange={handleValue}
+                                ></lightning-input>
+                            </div>
+                            <div class="ll-field">
+                                <lightning-input
+                                    type="number"
+                                    label="Archive retention (days, 0 = keep forever)"
+                                    value={draft.coldTierRetentionDays}
+                                    min="0"
+                                    step="1"
+                                    required
+                                    field-level-help="How long entries stay in the archive Big Object before the nightly purge deletes them permanently."
+                                    data-field="coldTierRetentionDays"
+                                    onchange={handleValue}
+                                ></lightning-input>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </section>
+
+            <!-- ------------------------------ privacy -->
+            <section class="ll-console__section">
+                <c-lite-logger-section-header
+                    heading="Privacy"
+                    description="Masking runs in the subscriber, before anything is written to either tier."
+                    collapsible="true"
+                    expanded={expanded.privacy}
+                    controls={privacySectionId}
+                    data-section="privacy"
+                    ontoggle={handleToggleSection}
+                ></c-lite-logger-section-header>
+
+                <template lwc:if={expanded.privacy}>
+                    <div id="ll-section-privacy" class="ll-section__body">
                         <lightning-input
                             type="toggle"
                             label="Mask sensitive data (card numbers, SSNs)"
+                            message-toggle-active="On"
+                            message-toggle-inactive="Off"
+                            field-level-help="Applies to the message, exception message and stack trace. Individual entries can opt out in Apex."
                             checked={draft.applyDataMasking}
                             data-field="applyDataMasking"
                             onchange={handleToggle}
-                            class="slds-m-top_medium"
                         ></lightning-input>
                     </div>
-                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
-                        <lightning-input
-                            type="toggle"
-                            label="Store entries in hot tier"
-                            checked={draft.storeInHotTier}
-                            data-field="storeInHotTier"
-                            onchange={handleToggle}
-                        ></lightning-input>
-                        <lightning-input
-                            type="number"
-                            label="Hot tier retention (days)"
-                            value={draft.hotTierRetentionDays}
-                            min="1"
-                            max="30"
-                            data-field="hotTierRetentionDays"
-                            onchange={handleValue}
-                            class="slds-m-top_medium"
-                        ></lightning-input>
-                        <lightning-input
-                            type="number"
-                            label="Cold tier retention (days, 0 = keep forever)"
-                            value={draft.coldTierRetentionDays}
-                            min="0"
-                            data-field="coldTierRetentionDays"
-                            onchange={handleValue}
-                            class="slds-m-top_medium"
-                        ></lightning-input>
-                    </div>
-                </div>
+                </template>
+            </section>
 
-                <div class="slds-m-top_medium">
+            <!-- ------------------------------ archive job -->
+            <section class="ll-console__section">
+                <c-lite-logger-section-header
+                    heading="Nightly archive job"
+                    description={archiveDescription}
+                    collapsible="true"
+                    expanded={expanded.archive}
+                    controls={archiveSectionId}
+                    data-section="archive"
+                    ontoggle={handleToggleSection}
+                >
+                    <template lwc:if={scheduleLoaded}>
+                        <span slot="actions" class={archiveStatusClass}>
+                            <lightning-icon
+                                icon-name={archiveStatusIcon}
+                                size="xx-small"
+                                alternative-text=""
+                                class="ll-status__icon"
+                            ></lightning-icon>
+                            {archiveStatusLabel}
+                        </span>
+                    </template>
+                </c-lite-logger-section-header>
+
+                <template lwc:if={expanded.archive}>
+                    <div id="ll-section-archive" class="ll-section__body">
+                        <template lwc:if={scheduleLoaded}>
+                            <template lwc:if={archiveScheduled}>
+                                <div class="ll-alert ll-alert_info" role="status">
+                                    <lightning-icon
+                                        icon-name="utility:clock"
+                                        size="xx-small"
+                                        alternative-text=""
+                                        class="ll-alert__icon"
+                                    ></lightning-icon>
+                                    <span>Runs every day at 1:00 AM. Nothing else to do here.</span>
+                                </div>
+                            </template>
+                            <template lwc:else>
+                                <lightning-button
+                                    variant="brand"
+                                    label={scheduleLabel}
+                                    icon-name="utility:clock"
+                                    disabled={scheduling}
+                                    onclick={handleSchedule}
+                                ></lightning-button>
+                            </template>
+                        </template>
+                        <template lwc:else>
+                            <c-lite-logger-skeleton
+                                variant="text"
+                                count="2"
+                                label="Checking the archive schedule…"
+                            ></c-lite-logger-skeleton>
+                        </template>
+                    </div>
+                </template>
+            </section>
+
+            <!-- ------------------------------ action bar -->
+            <footer class="ll-actionbar">
+                <div class="ll-actionbar__state">
+                    <template lwc:if={showValidationHint}>
+                        <span class="ll-actionbar__hint">
+                            <lightning-icon
+                                icon-name="utility:warning"
+                                size="xx-small"
+                                alternative-text="Attention"
+                                class="ll-alert__icon"
+                            ></lightning-icon>
+                            Fix the retention values above before saving.
+                        </span>
+                    </template>
+                    <span class={dirtyPillClass}>
+                        <lightning-icon
+                            icon-name={dirtyPillIcon}
+                            size="xx-small"
+                            alternative-text=""
+                            class="ll-flag__icon"
+                        ></lightning-icon>
+                        {dirtyPillLabel}
+                    </span>
+                </div>
+                <div class="ll-actionbar__buttons">
                     <lightning-button
-                        variant="brand"
-                        label="Save Org Defaults"
-                        onclick={handleSave}
-                        disabled={saving}
+                        variant="neutral"
+                        label="Discard changes"
+                        disabled={discardDisabled}
+                        onclick={handleDiscard}
                     ></lightning-button>
+                    <lightning-button
+                        data-id="save"
+                        variant="brand"
+                        label={saveLabel}
+                        disabled={saveDisabled}
+                        onclick={handleSave}
+                    ></lightning-button>
+                    <template lwc:if={saving}>
+                        <span class="ll-actionbar__spinner">
+                            <lightning-spinner
+                                size="small"
+                                variant="brand"
+                                alternative-text="Saving settings"
+                            ></lightning-spinner>
+                        </span>
+                    </template>
                 </div>
+            </footer>
+        </template>
+    </div>
 
-                <div class="slds-box slds-box_small slds-m-top_medium">
-                    <p class="slds-text-title slds-m-bottom_small">Nightly Archive Job</p>
-                    <template lwc:if={archiveScheduled}>
-                        <lightning-badge label="Scheduled - runs nightly at 1 AM"></lightning-badge>
-                    </template>
-                    <template lwc:else>
-                        <p class="slds-text-color_weak slds-m-bottom_small">
-                            Not scheduled. Without it, aged entries stay in expensive standard storage.
-                        </p>
-                        <lightning-button
-                            label="Schedule Nightly Archive"
-                            onclick={handleSchedule}
-                        ></lightning-button>
-                    </template>
+    <!-- ------------------------------------------------ destructive confirmation -->
+    <template lwc:if={confirmOpen}>
+        <div class="ll-modal__backdrop" onkeydown={handleConfirmKeyDown}>
+            <section
+                role="dialog"
+                tabindex="-1"
+                aria-modal="true"
+                aria-labelledby="ll-confirm-title"
+                aria-describedby="ll-confirm-body"
+                class="ll-modal"
+            >
+                <header class="ll-modal__head">
+                    <lightning-icon
+                        icon-name="utility:warning"
+                        size="small"
+                        alternative-text="Warning"
+                        class="ll-modal__icon"
+                    ></lightning-icon>
+                    <h2 id="ll-confirm-title" class="ll-modal__title">Confirm these changes</h2>
+                </header>
+                <div id="ll-confirm-body" class="ll-modal__body">
+                    <p class="ll-modal__lead">Saving will have the following effects:</p>
+                    <ul class="ll-modal__list" role="list">
+                        <template for:each={destructiveChanges} for:item="change">
+                            <li key={change.key} class="ll-modal__item">{change.text}</li>
+                        </template>
+                    </ul>
                 </div>
-            </template>
-            <template lwc:elseif={error}>
-                <p class="slds-text-color_error">{error}</p>
-            </template>
+                <footer class="ll-modal__foot">
+                    <lightning-button
+                        data-id="confirm-cancel"
+                        variant="neutral"
+                        label="Cancel"
+                        onclick={handleConfirmCancel}
+                    ></lightning-button>
+                    <lightning-button
+                        variant="destructive"
+                        label="Save anyway"
+                        onclick={handleConfirmProceed}
+                    ></lightning-button>
+                </footer>
+            </section>
         </div>
-    </lightning-card>
+    </template>
 </template>

@@ -1,0 +1,106 @@
+:host {
+    display: block;
+}
+
+.ll-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.375rem;
+    padding: var(--slds-g-spacing-6, 2rem) var(--slds-g-spacing-4, 1rem);
+    min-height: 12rem;
+    justify-content: center;
+    border: var(--slds-g-sizing-border-1, 1px) dashed var(--ll-border, #dddbda);
+    border-radius: var(--slds-g-radius-border-2, 0.25rem);
+    background: var(--ll-surface-sunken, #fafaf9);
+    animation: ll-empty-in 200ms ease-out both;
+}
+
+.ll-empty_compact {
+    padding: 1.25rem var(--slds-g-spacing-3, 0.75rem);
+    min-height: 8.5rem;
+}
+
+.ll-empty__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    margin-bottom: 0.125rem;
+}
+
+.ll-empty__icon_positive {
+    background: var(--ll-sev-ok-tint, #e5f7ec);
+    --slds-c-icon-color-foreground-default: var(--ll-sev-ok-text, #1b6b3a);
+}
+
+.ll-empty__icon_neutral {
+    background: var(--ll-surface, #fff);
+    border: var(--slds-g-sizing-border-1, 1px) solid var(--ll-border, #dddbda);
+    --slds-c-icon-color-foreground-default: var(--ll-text-muted, #514f4d);
+}
+
+.ll-empty__icon_accent {
+    background: var(--ll-accent-soft, #eef2ff);
+    --slds-c-icon-color-foreground-default: var(--ll-accent, #4338ca);
+}
+
+.ll-empty__heading {
+    font-size: var(--slds-g-font-scale-base, 0.8125rem);
+    font-weight: var(--slds-g-font-weight-7, 700);
+    color: var(--ll-text, #181818);
+    letter-spacing: -0.005em;
+}
+
+.ll-empty__message {
+    font-size: var(--slds-g-font-scale-neg-1, 0.75rem);
+    line-height: 1.45;
+    color: var(--ll-text-muted, #514f4d);
+    max-width: 32rem;
+}
+
+.ll-empty__hint {
+    margin-top: 0.125rem;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.ll-empty__code {
+    display: inline-block;
+    padding: 0.1875rem 0.375rem;
+    border-radius: var(--slds-g-radius-border-1, 0.125rem);
+    background: var(--ll-code-surface, #f3f3f3);
+    border: var(--slds-g-sizing-border-1, 1px) solid var(--ll-border, #dddbda);
+    font-family: var(--ll-font-mono, 'SFMono-Regular', Menlo, Consolas, monospace);
+    font-size: 0.6875rem;
+    color: var(--ll-accent-text, #312e81);
+    white-space: nowrap;
+}
+
+.ll-empty__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-top: var(--slds-g-spacing-2, 0.5rem);
+}
+
+@keyframes ll-empty-in {
+    from {
+        opacity: 0;
+        transform: translateY(0.25rem);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ll-empty {
+        animation: none;
+    }
+}

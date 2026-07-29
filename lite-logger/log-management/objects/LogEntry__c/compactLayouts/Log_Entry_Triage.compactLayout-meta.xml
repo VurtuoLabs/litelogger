@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CompactLayout xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Log_Entry_Triage</fullName>
+    <fields>Name</fields>
+    <fields>LoggingLevel__c</fields>
+    <fields>Timestamp__c</fields>
+    <fields>OriginType__c</fields>
+    <fields>OriginLocation__c</fields>
+    <fields>ExceptionType__c</fields>
+    <fields>TransactionId__c</fields>
+    <label>Log Entry Triage</label>
+</CompactLayout>

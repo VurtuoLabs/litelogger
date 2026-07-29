@@ -1,0 +1,47 @@
+<template>
+    <div class={containerClass} role="status" aria-live="polite">
+        <span class="slds-assistive-text">{label}</span>
+
+        <!-- KPI tile: same box as the loaded metric so nothing shifts on arrival -->
+        <template lwc:if={isMetric}>
+            <template for:each={items} for:item="item">
+                <div key={item.key} class="ll-skel__metric" aria-hidden="true">
+                    <span class="ll-skel__bar ll-skel__bar_label"></span>
+                    <span class="ll-skel__bar ll-skel__bar_value"></span>
+                    <span class="ll-skel__bar ll-skel__bar_support"></span>
+                    <span class="ll-skel__bar ll-skel__bar_track"></span>
+                </div>
+            </template>
+        </template>
+
+        <!-- Log stream rows: mirrors the real row grid, gutter included -->
+        <template lwc:elseif={isRows}>
+            <template for:each={items} for:item="item">
+                <div key={item.key} class="ll-skel__row" aria-hidden="true">
+                    <span class="ll-skel__gutter"></span>
+                    <span class="ll-skel__bar ll-skel__bar_time"></span>
+                    <span class="ll-skel__bar ll-skel__bar_sev"></span>
+                    <span class={item.messageClass}></span>
+                    <span class="ll-skel__bar ll-skel__bar_origin"></span>
+                </div>
+            </template>
+        </template>
+
+        <!-- Form fields: label + control box -->
+        <template lwc:elseif={isField}>
+            <template for:each={items} for:item="item">
+                <div key={item.key} class="ll-skel__field" aria-hidden="true">
+                    <span class="ll-skel__bar ll-skel__bar_label"></span>
+                    <span class="ll-skel__bar ll-skel__bar_control"></span>
+                </div>
+            </template>
+        </template>
+
+        <!-- Plain text lines -->
+        <template lwc:else>
+            <template for:each={items} for:item="item">
+                <span key={item.key} class={item.messageClass} aria-hidden="true"></span>
+            </template>
+        </template>
+    </div>
+</template>

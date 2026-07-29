@@ -1,0 +1,47 @@
+<template>
+    <div class={containerClass} role="alert">
+        <div class="ll-error__head">
+            <span class="ll-error__icon">
+                <lightning-icon icon-name="utility:error" size="x-small" alternative-text="Error"></lightning-icon>
+            </span>
+            <div class="ll-error__copy">
+                <p class="ll-error__heading">{heading}</p>
+                <p class="ll-error__message">{message}</p>
+            </div>
+        </div>
+
+        <div class="ll-error__actions">
+            <template lwc:if={retryVisible}>
+                <lightning-button
+                    variant="brand"
+                    label={retryButtonLabel}
+                    icon-name="utility:refresh"
+                    disabled={retrying}
+                    onclick={handleRetry}
+                >
+                </lightning-button>
+            </template>
+            <template lwc:if={detail}>
+                <button
+                    type="button"
+                    class="ll-error__toggle"
+                    aria-expanded={detailExpandedAttr}
+                    aria-controls="ll-error-detail"
+                    onclick={toggleDetail}
+                >
+                    <lightning-icon
+                        icon-name={detailIcon}
+                        size="xx-small"
+                        alternative-text=""
+                        class="ll-error__toggle-icon"
+                    ></lightning-icon>
+                    {detailToggleLabel}
+                </button>
+            </template>
+        </div>
+
+        <template lwc:if={detailExpanded}>
+            <pre id="ll-error-detail" class="ll-error__detail" tabindex="0">{detail}</pre>
+        </template>
+    </div>
+</template>
