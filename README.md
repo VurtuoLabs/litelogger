@@ -96,7 +96,7 @@ sf org login web --alias litelogger-dev --set-default \
 # 2. Generate the manifest from source (or use the committed manifest/package.xml)
 sf project generate manifest --source-dir lite-logger --output-dir manifest --name package.xml
 
-# 3. Deploy all 79 components
+# 3. Deploy all 87 components
 sf project deploy start --manifest manifest/package.xml -o litelogger-dev --wait 15
 
 # 4. Assign access
@@ -159,14 +159,14 @@ Entries below the configured level become no-op builders (safe to chain, nothing
 
 ### UI
 
-- **LiteLogger app**, Home (summary tiles + filterable recent entries), Log Entries (full object tab: list views, reports), Settings (org defaults + archive scheduling, zero anonymous Apex)
+- **LiteLogger app**, Home (log console: ERROR-first KPI strip, severity mix, filterable entry stream), Log Entries (full object tab: list views, reports), Settings (org defaults + archive scheduling, zero anonymous Apex)
 - **Related Log Entries**, record-page component showing entries captured against the current record
 
 ## Project structure
 
 ```
 LiteLogger/
-├── manifest/package.xml            # deploy manifest (79 components)
+├── manifest/package.xml            # deploy manifest (87 components)
 ├── config/project-scratch-def.json
 └── lite-logger/                    # single package directory (sfdx source format)
     ├── logger-engine/              # capture: Logger, LogEntryEventBuilder, LogEntryEvent__e
@@ -179,7 +179,7 @@ LiteLogger/
 
 ## Status
 
-`v0.2.0`, deployed and verified against a live dev org: 79/79 components, 11/11 tests passing, end-to-end smoke test (publish → subscribe → mask → store) confirmed. Alerting and Flow/LWC capture entry points are on the [roadmap](ARCHITECTURE.md#roadmap).
+`v0.2.0`, deployed and verified against a live dev org: 79/79 components, 11/11 tests passing, end-to-end smoke test (publish → subscribe → mask → store) confirmed. The UI redesign since that run adds 8 components (7 LWC bundles + a `LogEntry__c` `All` list view) that have not yet been deployed to an org. Alerting and Flow/LWC capture entry points are on the [roadmap](ARCHITECTURE.md#roadmap).
 
 ## License
 

@@ -1,20 +1,142 @@
 <template>
-    <lightning-card title={cardTitle} icon-name="custom:custom53">
-        <div class="slds-p-horizontal_medium slds-p-bottom_medium">
-            <template lwc:if={hasEntries}>
-                <lightning-datatable
-                    key-field="Id"
-                    data={entries}
-                    columns={columns}
-                    hide-checkbox-column
-                ></lightning-datatable>
+    <div class="ll-panel">
+        <!-- ------------------------------------------------ panel header -->
+        <header class="ll-panel__head">
+            <div class="ll-panel__identity">
+                <p class="ll-panel__eyebrow">LiteLogger</p>
+                <div class="ll-panel__titlerow">
+                    <h2 class="ll-panel__title">{headline}</h2>
+                    <template lwc:if={headerBadge}>
+                        <span class="ll-panel__count">{headerBadge}</span>
+                    </template>
+                    <template lwc:if={showStatusPill}>
+                        <span class={statusPillClass}>
+                            <lightning-icon
+                                icon-name={statusPillIcon}
+                                size="xx-small"
+                                alternative-text=""
+                                class="ll-status__icon"
+                            ></lightning-icon>
+                            {statusPillLabel}
+                        </span>
+                    </template>
+                </div>
+            </div>
+
+            <lightning-button-icon
+                icon-name="utility:refresh"
+                variant="border-filled"
+                size="small"
+                alternative-text={refreshTitle}
+                title={refreshTitle}
+                disabled={refreshing}
+                onclick={handleRefresh}
+            ></lightning-button-icon>
+        </header>
+
+        <p class="ll-panel__description">{headerDescription}</p>
+
+        <!-- ------------------------------------------------ chips + search -->
+        <template lwc:if={showChips}>
+            <div class="ll-panel__filters">
+                <div class="ll-chiprow" role="group" aria-label="Filter entries by logging level">
+                    <template for:each={severityChips} for:item="chip">
+                        <button
+                            key={chip.key}
+                            type="button"
+                            class={chip.chipClass}
+                            aria-pressed={chip.ariaPressed}
+                            aria-label={chip.ariaLabel}
+                            data-level={chip.level}
+                            onclick={handleChipClick}
+                        >
+                            <template lwc:if={chip.isAll}>
+                                <span class="ll-chip__label">{chip.label}</span>
+                            </template>
+                            <template lwc:else>
+                                <c-lite-logger-severity-badge
+                                    severity={chip.level}
+                                    size="small"
+                                    hide-icon="true"
+                                    abbreviated="true"
+                                ></c-lite-logger-severity-badge>
+                            </template>
+                            <span class="ll-chip__count">{chip.count}</span>
+                        </button>
+                    </template>
+                </div>
+
+                <template lwc:if={showSearch}>
+                    <lightning-input
+                        type="search"
+                        data-id="search"
+                        label="Search entries for this record"
+                        variant="label-hidden"
+                        placeholder="Search message, origin, tag…"
+                        onchange={handleSearch}
+                        class="ll-panel__search"
+                    ></lightning-input>
+                </template>
+            </div>
+        </template>
+
+        <template lwc:if={transactionFilter}>
+            <div class="ll-panel__pills">
+                <lightning-pill label={transactionPillLabel} onremove={handleClearTransaction}></lightning-pill>
+            </div>
+        </template>
+
+        <!-- ------------------------------------------------ body -->
+        <div class="ll-panel__body">
+            <template lwc:if={error}>
+                <c-lite-logger-error-state
+                    compact="true"
+                    heading="Entries unavailable"
+                    message={error.message}
+                    detail={error.detail}
+                    retry-label="Reload entries"
+                    retrying={refreshing}
+                    onretry={handleRetry}
+                ></c-lite-logger-error-state>
             </template>
-            <template lwc:elseif={error}>
-                <p class="slds-text-color_error">{error}</p>
+
+            <template lwc:elseif={showStream}>
+                <c-lite-logger-log-stream
+                    entries={filteredEntries}
+                    loading={showSkeleton}
+                    dense="true"
+                    page-size={pageSize}
+                    skeleton-rows={skeletonRows}
+                    ontransactionfilter={handleTransactionFilter}
+                    onnotify={handleNotify}
+                ></c-lite-logger-log-stream>
+
+                <template lwc:if={isCapped}>
+                    <p class="ll-note">
+                        <lightning-icon
+                            icon-name="utility:info_alt"
+                            size="xx-small"
+                            alternative-text="Note"
+                            class="ll-note__icon"
+                        ></lightning-icon>
+                        Only the 200 newest entries for this record are shown. Older entries are in the archive
+                        Big Object.
+                    </p>
+                </template>
             </template>
+
             <template lwc:else>
-                <p class="slds-text-color_weak">No log entries reference this record.</p>
+                <c-lite-logger-empty-state
+                    compact="true"
+                    icon-name={emptyIcon}
+                    heading={emptyHeading}
+                    message={emptyMessage}
+                    hint={emptyHint}
+                    tone={emptyTone}
+                    action-label={emptyActionLabel}
+                    onaction={handleEmptyAction}
+                ></c-lite-logger-empty-state>
             </template>
         </div>
-    </lightning-card>
+    </div>
 </template>

@@ -1,56 +1,319 @@
 <template>
-    <lightning-card title="LiteLogger" icon-name="custom:custom53">
-        <lightning-button-icon
-            slot="actions"
-            icon-name="utility:refresh"
-            alternative-text="Refresh"
-            title="Refresh"
-            onclick={handleRefresh}
-        ></lightning-button-icon>
-
-        <div class="slds-p-horizontal_medium slds-p-bottom_medium">
-            <!-- Summary tiles: last 7 days by level -->
-            <div class="slds-grid slds-wrap slds-gutters slds-m-bottom_medium">
-                <template for:each={summaryTiles} for:item="tile">
-                    <div key={tile.label} class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4 slds-m-bottom_small">
-                        <div class="slds-box slds-box_small slds-text-align_center">
-                            <div class={tile.valueClass}>{tile.value}</div>
-                            <div class="slds-text-title">{tile.label}</div>
-                        </div>
-                    </div>
-                </template>
+    <div class="ll-console">
+        <!-- ------------------------------------------------ console header -->
+        <header class="ll-console__head">
+            <div class="ll-console__identity">
+                <p class="ll-console__eyebrow">LiteLogger · hot tier</p>
+                <h2 class="ll-console__title">{headline}</h2>
             </div>
 
-            <!-- Level filter -->
-            <div class="slds-m-bottom_small">
+            <div class="ll-console__controls">
                 <lightning-combobox
-                    name="levelFilter"
-                    label="Filter by level"
+                    name="window"
+                    label="Summary window"
                     variant="label-hidden"
-                    value={levelFilter}
-                    options={levelOptions}
-                    onchange={handleLevelChange}
+                    value={windowValue}
+                    options={windowOptions}
+                    onchange={handleWindowChange}
+                    class="ll-control ll-control_window"
                 ></lightning-combobox>
+                <lightning-button
+                    variant="brand"
+                    label={refreshLabel}
+                    icon-name="utility:refresh"
+                    disabled={refreshing}
+                    onclick={handleRefresh}
+                ></lightning-button>
+                <p class="ll-console__stamp" aria-live="polite">{lastUpdatedLabel}</p>
             </div>
+        </header>
 
-            <!-- Recent entries -->
-            <template lwc:if={hasEntries}>
-                <lightning-datatable
-                    key-field="Id"
-                    data={entries}
-                    columns={columns}
-                    hide-checkbox-column
-                    show-row-number-column
-                ></lightning-datatable>
+        <!-- ------------------------------------------------ metric strip -->
+        <section class={stripClass} aria-label="Severity summary" aria-busy={isBusy}>
+            <template lwc:if={summaryError}>
+                <c-lite-logger-error-state
+                    compact="true"
+                    heading="Summary unavailable"
+                    message={summaryError.message}
+                    detail={summaryError.detail}
+                    retrying={refreshing}
+                    onretry={handleRetry}
+                ></c-lite-logger-error-state>
             </template>
-            <template lwc:elseif={error}>
-                <p class="slds-text-color_error slds-m-top_medium">{error}</p>
+
+            <template lwc:elseif={showSummarySkeleton}>
+                <!-- Same grid, same tile heights as the loaded strip: no shift on arrival -->
+                <div class="ll-kpis">
+                    <div class="ll-kpis__hero">
+                        <c-lite-logger-skeleton
+                            variant="metric"
+                            count="1"
+                            label="Loading log summary…"
+                        ></c-lite-logger-skeleton>
+                    </div>
+                    <c-lite-logger-skeleton variant="metric" count="1" label=""></c-lite-logger-skeleton>
+                    <c-lite-logger-skeleton variant="metric" count="1" label=""></c-lite-logger-skeleton>
+                    <c-lite-logger-skeleton variant="metric" count="1" label=""></c-lite-logger-skeleton>
+                    <c-lite-logger-skeleton variant="metric" count="1" label=""></c-lite-logger-skeleton>
+                </div>
             </template>
+
             <template lwc:else>
-                <p class="slds-text-color_weak slds-text-align_center slds-m-top_medium">
-                    No log entries in the hot tier. Call Logger.saveLog() from Apex to see entries here.
-                </p>
+                <div class="ll-kpis">
+                    <!-- Hero: the one number an operator opens this page for -->
+                    <div class="ll-kpis__hero">
+                        <c-lite-logger-kpi-card
+                            hero="true"
+                            severity="ERROR"
+                            label={errorLabel}
+                            value={errorCount}
+                            supporting-text={errorSupportingText}
+                            tone={errorTone}
+                            share={errorShare}
+                            trend={errorTrend}
+                            trend-label={trendLabel}
+                            trend-tone={errorTrendTone}
+                            actionable="true"
+                            selected={errorSelected}
+                            action-label="Filter the stream to ERROR entries"
+                            onselect={handleTileSelect}
+                        ></c-lite-logger-kpi-card>
+                    </div>
+
+                    <c-lite-logger-kpi-card
+                        icon-name="utility:record"
+                        label={totalLabel}
+                        value={windowTotal}
+                        supporting-text={totalSupportingText}
+                        tone="accent"
+                        trend={totalTrend}
+                        trend-label={trendLabel}
+                        trend-tone="neutral"
+                        actionable="true"
+                        selected={totalSelected}
+                        action-label="Clear the level filter and show all entries"
+                        onselect={handleTileSelect}
+                    ></c-lite-logger-kpi-card>
+
+                    <c-lite-logger-kpi-card
+                        severity="WARN"
+                        label="Warnings"
+                        value={warnCount}
+                        supporting-text={warnSupportingText}
+                        tone="warn"
+                        share={warnShare}
+                        trend={warnTrend}
+                        trend-label={trendLabel}
+                        trend-tone="neutral"
+                        actionable="true"
+                        selected={warnSelected}
+                        action-label="Filter the stream to WARN entries"
+                        onselect={handleTileSelect}
+                    ></c-lite-logger-kpi-card>
+
+                    <c-lite-logger-kpi-card
+                        severity="INFO"
+                        label="Info"
+                        value={infoCount}
+                        supporting-text={infoSupportingText}
+                        tone="neutral"
+                        share={infoShare}
+                        actionable="true"
+                        selected={infoSelected}
+                        action-label="Filter the stream to INFO entries"
+                        onselect={handleTileSelect}
+                    ></c-lite-logger-kpi-card>
+
+                    <c-lite-logger-kpi-card
+                        severity="DEBUG"
+                        label="Debug & below"
+                        value={lowerCount}
+                        supporting-text={lowerSupportingText}
+                        tone="neutral"
+                        share={lowerShare}
+                    ></c-lite-logger-kpi-card>
+                </div>
             </template>
-        </div>
-    </lightning-card>
+        </section>
+
+        <!-- ------------------------------------------------ severity mix -->
+        <section class="ll-console__section ll-console__section_divided">
+            <c-lite-logger-section-header
+                heading="Severity mix"
+                description={mixDescription}
+                collapsible="true"
+                expanded={mixExpanded}
+                controls={mixSectionId}
+                ontoggle={handleToggleMix}
+            >
+            </c-lite-logger-section-header>
+
+            <template lwc:if={mixExpanded}>
+                <div id="ll-mix-section" class="ll-mix">
+                    <template lwc:if={showSummarySkeleton}>
+                        <c-lite-logger-skeleton
+                            variant="text"
+                            count="4"
+                            label="Loading severity mix…"
+                        ></c-lite-logger-skeleton>
+                    </template>
+
+                    <template lwc:elseif={hasWindowEntries}>
+                        <!-- Compact stacked distribution: proportion by shape + colour,
+                             with the exact numbers repeated in the legend below. -->
+                        <div class="ll-mix__bar" role="img" aria-label={mixAriaLabel}>
+                            <template for:each={mixSegments} for:item="seg">
+                                <span key={seg.level} class={seg.segmentClass} style={seg.segmentStyle}></span>
+                            </template>
+                        </div>
+
+                        <ul class="ll-legend" role="list">
+                            <template for:each={severityMix} for:item="row">
+                                <li key={row.level} class="ll-legend__row">
+                                    <span class="ll-legend__badge">
+                                        <c-lite-logger-severity-badge
+                                            severity={row.level}
+                                            size="small"
+                                        ></c-lite-logger-severity-badge>
+                                    </span>
+                                    <span class="ll-legend__count">{row.valueLabel}</span>
+                                    <span class="ll-legend__pct">{row.pctLabel}</span>
+                                    <span class="ll-legend__track">
+                                        <span class={row.barClass} style={row.barStyle}></span>
+                                    </span>
+                                </li>
+                            </template>
+                        </ul>
+                    </template>
+
+                    <template lwc:else>
+                        <p class="ll-mix__empty">
+                            No entries in the {windowLabelLong} - nothing to distribute.
+                        </p>
+                    </template>
+                </div>
+            </template>
+        </section>
+
+        <!-- ------------------------------------------------ stream -->
+        <section class="ll-console__section">
+            <c-lite-logger-section-header
+                heading="Entry stream"
+                description={streamDescription}
+            >
+                <div slot="actions" class="ll-filters">
+                    <lightning-input
+                        type="search"
+                        data-id="search"
+                        label="Search entries"
+                        variant="label-hidden"
+                        placeholder="Search message, origin, user, tag…"
+                        onchange={handleSearch}
+                        class="ll-control ll-control_search"
+                    ></lightning-input>
+                    <lightning-combobox
+                        name="level"
+                        label="Filter by level"
+                        variant="label-hidden"
+                        value={levelFilter}
+                        options={levelOptions}
+                        onchange={handleLevelChange}
+                        class="ll-control ll-control_level"
+                    ></lightning-combobox>
+                    <lightning-combobox
+                        name="rows"
+                        label="Rows to load"
+                        variant="label-hidden"
+                        value={rowLimitValue}
+                        options={rowLimitOptions}
+                        onchange={handleRowLimitChange}
+                        class="ll-control ll-control_rows"
+                    ></lightning-combobox>
+                </div>
+            </c-lite-logger-section-header>
+
+            <template lwc:if={hasActiveFilters}>
+                <div class="ll-chips">
+                    <span class="ll-chips__label">Filters</span>
+                    <template lwc:if={showLevelPill}>
+                        <lightning-pill label={levelPillLabel} onremove={handleClearLevel}></lightning-pill>
+                    </template>
+                    <template lwc:if={searchTerm}>
+                        <lightning-pill label={searchPillLabel} onremove={handleClearSearch}></lightning-pill>
+                    </template>
+                    <template lwc:if={transactionFilter}>
+                        <lightning-pill
+                            label={transactionPillLabel}
+                            onremove={handleClearTransaction}
+                        ></lightning-pill>
+                    </template>
+                    <lightning-button
+                        variant="base"
+                        label="Clear all"
+                        onclick={handleClearAllFilters}
+                        class="ll-chips__clear"
+                    ></lightning-button>
+                </div>
+            </template>
+
+            <template lwc:if={entriesError}>
+                <c-lite-logger-error-state
+                    heading="Log entries unavailable"
+                    message={entriesError.message}
+                    detail={entriesError.detail}
+                    retry-label="Reload entries"
+                    retrying={refreshing}
+                    onretry={handleRetry}
+                ></c-lite-logger-error-state>
+            </template>
+
+            <template lwc:elseif={showStream}>
+                <c-lite-logger-log-stream
+                    entries={filteredEntries}
+                    loading={showStreamSkeleton}
+                    page-size={pageSize}
+                    skeleton-rows={skeletonRows}
+                    ontransactionfilter={handleTransactionFilter}
+                    onnotify={handleNotify}
+                ></c-lite-logger-log-stream>
+
+                <template lwc:if={isCapped}>
+                    <p class="ll-note">
+                        <lightning-icon
+                            icon-name="utility:info_alt"
+                            size="xx-small"
+                            alternative-text="Note"
+                            class="ll-note__icon"
+                        ></lightning-icon>
+                        {cappedMessage}
+                    </p>
+                </template>
+            </template>
+
+            <template lwc:else>
+                <c-lite-logger-empty-state
+                    icon-name={emptyIcon}
+                    heading={emptyHeading}
+                    message={emptyMessage}
+                    hint={emptyHint}
+                    tone={emptyTone}
+                    action-label={emptyActionLabel}
+                    onaction={handleEmptyAction}
+                ></c-lite-logger-empty-state>
+            </template>
+        </section>
+
+        <footer class="ll-console__foot">
+            <lightning-icon
+                icon-name="utility:database"
+                size="xx-small"
+                alternative-text=""
+                class="ll-console__foot-icon"
+            ></lightning-icon>
+            <span
+                >Hot tier only. Older entries live in the LogEntryArchive__b Big Object and are not shown
+                here.</span
+            >
+        </footer>
+    </div>
 </template>

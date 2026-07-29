@@ -3,7 +3,7 @@
     <apiVersion>62.0</apiVersion>
     <isExposed>true</isExposed>
     <masterLabel>LiteLogger Settings</masterLabel>
-    <description>Admin form for LiteLogger org defaults and the nightly archive schedule.</description>
+    <description>Grouped settings for LiteLogger org defaults, with effective-configuration banner, validation, change confirmation and nightly archive scheduling.</description>
     <targets>
         <target>lightning__AppPage</target>
         <target>lightning__Tab</target>

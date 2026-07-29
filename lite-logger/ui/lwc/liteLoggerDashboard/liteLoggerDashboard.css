@@ -1,0 +1,438 @@
+/* =============================================================================
+ * LiteLogger console - token contract
+ * -----------------------------------------------------------------------------
+ * These custom properties are the app's design system. They are declared on the
+ * shell components (dashboard, settings, relatedLogEntries) and inherit through
+ * shadow DOM into every child LWC, which keeps one source of truth without any
+ * global stylesheet. SLDS global styling hooks are used wherever one exists so
+ * the console still follows the org theme; the hex values are fallbacks only.
+ * ========================================================================== */
+:host {
+    /* Identity: cool indigo on graphite */
+    --ll-accent: #4338ca;
+    --ll-accent-strong: #3730a3;
+    --ll-accent-text: #312e81;
+    --ll-accent-soft: #eef2ff;
+    --ll-accent-border: #c7d2fe;
+
+    /* Neutrals */
+    --ll-text: var(--slds-g-color-neutral-base-10, #181818);
+    --ll-text-muted: var(--slds-g-color-neutral-base-30, #514f4d);
+    --ll-text-subtle: var(--slds-g-color-neutral-base-50, #8c8c8c);
+    --ll-surface: var(--slds-g-color-surface-1, #ffffff);
+    --ll-surface-sunken: var(--slds-g-color-surface-container-1, #f7f6f6);
+    --ll-code-surface: #fbfbfe;
+    --ll-border: var(--slds-g-color-border-1, #dddbda);
+    --ll-border-subtle: var(--slds-g-color-border-1, #ebe9e8);
+    --ll-border-strong: var(--slds-g-color-border-2, #c9c7c5);
+    --ll-row-hover: #f5f5fb;
+
+    /* Severity channel */
+    --ll-sev-error: var(--slds-g-color-error-base-40, #ba0517);
+    --ll-sev-error-text: #8c1007;
+    --ll-sev-error-tint: #feded8;
+    --ll-sev-error-wash: #fff8f7;
+    --ll-sev-error-border: #f5a29b;
+    --ll-sev-warn: var(--slds-g-color-accent-base-50, #0176d3);
+    --ll-sev-warn-text: #014486;
+    --ll-sev-warn-tint: #eef4ff;
+    --ll-sev-warn-wash: #ffffff;
+    --ll-sev-warn-border: #cfe4fb;
+    --ll-sev-ok: var(--slds-g-color-success-base-50, #2e844a);
+    --ll-sev-ok-text: #1b6b3a;
+    --ll-sev-ok-tint: #e5f7ec;
+    --ll-sev-ok-border: var(--slds-g-color-success-base-90, #a3e0b8);
+
+    /* Type + skeleton */
+    --ll-font-mono: 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+    --ll-skeleton-base: #eceaea;
+    --ll-skeleton-shine: #f8f8f8;
+
+    display: block;
+}
+
+/* =============================================================================
+ * Shell - dense console, not an airy card stack.
+ * Vertical rhythm: 0.75rem section padding, 0.5rem grid gaps, 0.375rem stacks.
+ * ========================================================================== */
+.ll-console {
+    background: var(--ll-surface);
+    border: var(--slds-g-sizing-border-1, 1px) solid var(--ll-border);
+    border-top: 3px solid var(--ll-accent);
+    border-radius: var(--slds-g-radius-border-2, 0.25rem);
+    box-shadow: 0 1px 2px rgba(24, 24, 24, 0.06);
+    overflow: hidden;
+    animation: ll-fade-in 200ms ease-out both;
+}
+
+/* ---------------------------------------------------------------- header */
+.ll-console__head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    padding: 0.625rem var(--slds-g-spacing-4, 1rem) var(--slds-g-spacing-2, 0.5rem);
+    border-bottom: 1px solid var(--ll-border);
+    background: linear-gradient(180deg, var(--ll-accent-soft) 0%, var(--ll-surface) 100%);
+}
+
+.ll-console__eyebrow {
+    font-size: 0.5625rem;
+    font-weight: var(--slds-g-font-weight-7, 700);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ll-accent);
+}
+
+.ll-console__title {
+    font-size: 1.0625rem;
+    font-weight: var(--slds-g-font-weight-7, 700);
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    color: var(--ll-text);
+}
+
+.ll-console__controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.ll-console__stamp {
+    font-size: var(--slds-g-font-scale-neg-2, 0.625rem);
+    color: var(--ll-text-muted);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- sections */
+.ll-console__section {
+    padding: var(--slds-g-spacing-3, 0.75rem) var(--slds-g-spacing-4, 1rem);
+}
+
+/* Refreshing keeps the data on screen and dims it slightly instead of swapping in
+   skeletons, so the strip never changes height mid-refresh. */
+.ll-console__section_busy {
+    opacity: 0.78;
+    transition: opacity 160ms ease-out;
+}
+
+.ll-console__section + .ll-console__section {
+    border-top: 1px solid var(--ll-border-subtle);
+}
+
+/* ---------------------------------------------------------------- metric strip */
+.ll-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+    gap: 0.5rem;
+    align-items: stretch;
+}
+
+/* The hero tile earns twice the width: it is the page's primary decision signal. */
+.ll-kpis__hero {
+    grid-column: span 2;
+    /* Matches liteLoggerKpiCard's hero min-height so the skeleton occupies the same box. */
+    --ll-skel-metric-height: 8.5rem;
+}
+
+/* ---------------------------------------------------------------- severity mix */
+.ll-mix {
+    animation: ll-fade-in 180ms ease-out both;
+}
+
+.ll-mix__bar {
+    display: flex;
+    height: 0.625rem;
+    border-radius: var(--slds-g-radius-border-1, 0.125rem);
+    overflow: hidden;
+    background: var(--ll-surface-sunken);
+    border: var(--slds-g-sizing-border-1, 1px) solid var(--ll-border);
+    margin: 0.125rem 0 0.625rem;
+}
+
+.ll-mix__seg {
+    flex-basis: 0;
+    min-width: var(--slds-g-sizing-border-3, 0.1875rem);
+    transition: flex-grow 220ms ease-out;
+}
+
+.ll-mix__seg_error {
+    background-color: var(--ll-sev-error);
+}
+.ll-mix__seg_warn {
+    background-color: var(--ll-sev-warn);
+}
+.ll-mix__seg_info {
+    background-color: var(--ll-accent);
+}
+.ll-mix__seg_debug,
+.ll-mix__seg_fine,
+.ll-mix__seg_finest,
+.ll-mix__seg_unknown {
+    background-color: var(--ll-text-subtle);
+}
+
+/* Pattern overlays make the segments distinguishable without colour. */
+.ll-mix__seg_striped {
+    background-image: repeating-linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.9) 0 0.125rem,
+        transparent 0.125rem 0.3125rem
+    );
+}
+
+.ll-mix__seg_dashed {
+    background-image: repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.9) 0 0.1875rem,
+        transparent 0.1875rem 0.4375rem
+    );
+}
+
+.ll-mix__seg_dotted {
+    background-image: repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.9) 0 0.0625rem,
+        transparent 0.0625rem 0.25rem
+    );
+}
+
+.ll-mix__empty {
+    font-size: var(--slds-g-font-scale-neg-1, 0.75rem);
+    color: var(--ll-text-muted);
+    padding: var(--slds-g-spacing-1, 0.25rem) 0 var(--slds-g-spacing-2, 0.5rem);
+}
+
+/* Legend doubles as the summary-stats table: tabular numerals, right aligned. */
+.ll-legend {
+    list-style: none;
+    display: grid;
+    gap: 0.1875rem;
+}
+
+.ll-legend__row {
+    display: grid;
+    grid-template-columns: 5.75rem 4rem 3rem minmax(0, 1fr);
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.125rem 0;
+}
+
+.ll-legend__count,
+.ll-legend__pct {
+    font-size: 0.6875rem;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    color: var(--ll-text);
+    font-weight: var(--slds-g-font-weight-6, 600);
+}
+
+.ll-legend__pct {
+    color: var(--ll-text-muted);
+    font-weight: var(--slds-g-font-weight-4, 400);
+}
+
+.ll-legend__track {
+    display: block;
+    height: 0.25rem;
+    border-radius: 0.125rem;
+    background: var(--ll-surface-sunken);
+    overflow: hidden;
+}
+
+.ll-legend__bar {
+    display: block;
+    height: 100%;
+    border-radius: 0.125rem;
+    transition: width 220ms ease-out;
+}
+
+.ll-legend__bar_error {
+    background: var(--ll-sev-error);
+}
+.ll-legend__bar_warn {
+    background: var(--ll-sev-warn);
+}
+.ll-legend__bar_info {
+    background: var(--ll-accent);
+}
+.ll-legend__bar_debug,
+.ll-legend__bar_fine,
+.ll-legend__bar_finest {
+    background: var(--ll-text-subtle);
+}
+
+/* ---------------------------------------------------------------- filter bar */
+.ll-filters {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+}
+
+.ll-control_search {
+    width: var(--slds-g-sizing-14, 15rem);
+}
+
+.ll-control_level {
+    width: 8.5rem;
+}
+
+.ll-control_rows {
+    width: 7rem;
+}
+
+.ll-control_window {
+    width: 9.5rem;
+}
+
+/* ---------------------------------------------------------------- filter chips */
+.ll-chips {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    padding: 0.375rem 0 var(--slds-g-spacing-2, 0.5rem);
+}
+
+.ll-chips__label {
+    font-size: 0.5625rem;
+    font-weight: var(--slds-g-font-weight-7, 700);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ll-text-muted);
+}
+
+/* ---------------------------------------------------------------- notes / footer */
+.ll-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.375rem;
+    margin-top: var(--slds-g-spacing-2, 0.5rem);
+    padding: 0.375rem var(--slds-g-spacing-2, 0.5rem);
+    border-left: 2px solid var(--ll-accent-border);
+    background: var(--ll-accent-soft);
+    border-radius: 0 var(--slds-g-radius-border-1, 0.125rem) var(--slds-g-radius-border-1, 0.125rem) 0;
+    font-size: 0.6875rem;
+    line-height: 1.4;
+    color: var(--ll-accent-text);
+}
+
+.ll-note__icon {
+    --slds-c-icon-color-foreground-default: var(--ll-accent);
+    flex: none;
+    margin-top: 0.0625rem;
+}
+
+.ll-console__foot {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: var(--slds-g-spacing-2, 0.5rem) var(--slds-g-spacing-4, 1rem) 0.625rem;
+    border-top: 1px solid var(--ll-border-subtle);
+    background: var(--ll-surface-sunken);
+    font-size: var(--slds-g-font-scale-neg-2, 0.625rem);
+    color: var(--ll-text-muted);
+}
+
+.ll-console__foot-icon {
+    --slds-c-icon-color-foreground-default: var(--ll-text-subtle);
+    flex: none;
+}
+
+/* ---------------------------------------------------------------- motion */
+@keyframes ll-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(0.25rem);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* ---------------------------------------------------------------- responsive */
+@media (max-width: 64em) {
+    .ll-control_search {
+        width: 11rem;
+    }
+}
+
+@media (max-width: 48em) {
+    .ll-console__head,
+    .ll-console__section {
+        padding-left: var(--slds-g-spacing-3, 0.75rem);
+        padding-right: var(--slds-g-spacing-3, 0.75rem);
+    }
+
+    .ll-console__controls {
+        width: 100%;
+    }
+
+    .ll-kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .ll-kpis__hero {
+        grid-column: span 2;
+        --ll-skel-metric-height: 7rem;
+    }
+
+    .ll-filters {
+        width: 100%;
+    }
+
+    .ll-control_search {
+        width: 100%;
+        flex: 1 1 100%;
+    }
+
+    .ll-control_level,
+    .ll-control_rows,
+    .ll-control_window {
+        flex: 1 1 8rem;
+        width: auto;
+    }
+
+    .ll-legend__row {
+        grid-template-columns: 5.5rem 3.5rem 2.75rem minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 30rem) {
+    .ll-kpis {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .ll-kpis__hero {
+        grid-column: span 1;
+    }
+
+    .ll-legend__row {
+        grid-template-columns: 5.25rem 3.25rem 2.5rem;
+    }
+
+    .ll-legend__track {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ll-console,
+    .ll-mix {
+        animation: none;
+    }
+
+    .ll-console__section_busy {
+        transition: none;
+    }
+
+    .ll-mix__seg,
+    .ll-legend__bar {
+        transition: none;
+    }
+}

@@ -1,0 +1,65 @@
+<template>
+    <div class={containerClass}>
+        <div class="ll-sec__main">
+            <template lwc:if={isLevel2}>
+                <h2 class="ll-sec__heading">
+                    <template lwc:if={collapsible}>
+                        <button
+                            type="button"
+                            class="ll-sec__toggle"
+                            aria-expanded={expandedAttr}
+                            aria-controls={controls}
+                            onclick={handleToggle}
+                        >
+                            <lightning-icon
+                                icon-name={toggleIcon}
+                                size="xx-small"
+                                alternative-text=""
+                                class="ll-sec__chevron"
+                            ></lightning-icon>
+                            <span class="ll-sec__title">{heading}</span>
+                        </button>
+                    </template>
+                    <template lwc:else>
+                        <span class="ll-sec__title">{heading}</span>
+                    </template>
+                </h2>
+            </template>
+            <template lwc:else>
+                <h3 class="ll-sec__heading">
+                    <template lwc:if={collapsible}>
+                        <button
+                            type="button"
+                            class="ll-sec__toggle"
+                            aria-expanded={expandedAttr}
+                            aria-controls={controls}
+                            onclick={handleToggle}
+                        >
+                            <lightning-icon
+                                icon-name={toggleIcon}
+                                size="xx-small"
+                                alternative-text=""
+                                class="ll-sec__chevron"
+                            ></lightning-icon>
+                            <span class="ll-sec__title">{heading}</span>
+                        </button>
+                    </template>
+                    <template lwc:else>
+                        <span class="ll-sec__title">{heading}</span>
+                    </template>
+                </h3>
+            </template>
+
+            <template lwc:if={eyebrow}>
+                <p class="ll-sec__eyebrow">{eyebrow}</p>
+            </template>
+            <template lwc:if={description}>
+                <p class="ll-sec__description">{description}</p>
+            </template>
+        </div>
+
+        <div class="ll-sec__actions">
+            <slot name="actions"></slot>
+        </div>
+    </div>
+</template>

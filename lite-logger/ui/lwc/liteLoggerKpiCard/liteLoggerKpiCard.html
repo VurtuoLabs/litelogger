@@ -1,0 +1,82 @@
+<template>
+    <template lwc:if={loading}>
+        <c-lite-logger-skeleton variant="metric" count="1" label={loadingLabel}></c-lite-logger-skeleton>
+    </template>
+
+    <template lwc:else>
+        <div class={cardClass}>
+            <!-- Stretched hit area: real button semantics without duplicating the tile markup -->
+            <template lwc:if={actionable}>
+                <button
+                    type="button"
+                    class="ll-kpi__hit"
+                    aria-pressed={selectedAttr}
+                    aria-label={actionLabel}
+                    onclick={handleClick}
+                ></button>
+            </template>
+
+            <div class="ll-kpi__head">
+                <template lwc:if={severity}>
+                    <c-lite-logger-severity-badge
+                        severity={severity}
+                        size="small"
+                    ></c-lite-logger-severity-badge>
+                </template>
+                <template lwc:elseif={iconName}>
+                    <span class="ll-kpi__icon">
+                        <lightning-icon icon-name={iconName} size="xx-small" alternative-text=""></lightning-icon>
+                    </span>
+                </template>
+                <span class="ll-kpi__label">{label}</span>
+                <template lwc:if={selected}>
+                    <span class="ll-kpi__flag">Filtered</span>
+                </template>
+            </div>
+
+            <p class="ll-kpi__value">
+                <template lwc:if={isNumericValue}>
+                    <lightning-formatted-number value={numericValue}></lightning-formatted-number>
+                </template>
+                <template lwc:else>{value}</template>
+                <template lwc:if={unit}>
+                    <span class="ll-kpi__unit">{unit}</span>
+                </template>
+            </p>
+
+            <template lwc:if={supportingText}>
+                <p class="ll-kpi__support">{supportingText}</p>
+            </template>
+
+            <div class="ll-kpi__foot">
+                <template lwc:if={hasShare}>
+                    <!-- Custom track rather than lightning-progress-bar: the fill colour
+                         is the severity channel, and progress-bar exposes no supported
+                         styling hook for it. Semantics are preserved with role/aria. -->
+                    <div
+                        class="ll-kpi__track"
+                        role="progressbar"
+                        aria-valuenow={shareValue}
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                        aria-label={shareAriaLabel}
+                    >
+                        <span class={progressClass} style={shareStyle}></span>
+                    </div>
+                </template>
+                <template lwc:if={hasTrend}>
+                    <p class={trendClass}>
+                        <lightning-icon
+                            icon-name={trendIcon}
+                            size="xx-small"
+                            alternative-text=""
+                            class="ll-kpi__trend-icon"
+                        ></lightning-icon>
+                        <span class="ll-kpi__trend-value">{trendText}</span>
+                        <span class="ll-kpi__trend-label">{trendLabel}</span>
+                    </p>
+                </template>
+            </div>
+        </div>
+    </template>
+</template>

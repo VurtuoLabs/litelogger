@@ -1,0 +1,253 @@
+<template>
+    <div class={rootClass}>
+        <!-- Column header: sortable, aligned to the row grid -->
+        <div class="ll-head" role="presentation">
+            <div class="ll-head__grid">
+                <span class="ll-head__gutter" aria-hidden="true"></span>
+                <button
+                    type="button"
+                    class="ll-head__cell ll-head__cell_sortable"
+                    aria-label={timeSortLabel}
+                    data-sort="time"
+                    onclick={handleSort}
+                >
+                    Time
+                    <lightning-icon
+                        icon-name={timeSortIcon}
+                        size="xx-small"
+                        alternative-text=""
+                        class="ll-head__icon"
+                    ></lightning-icon>
+                </button>
+                <button
+                    type="button"
+                    class="ll-head__cell ll-head__cell_sortable"
+                    aria-label={severitySortLabel}
+                    data-sort="severity"
+                    onclick={handleSort}
+                >
+                    Level
+                    <lightning-icon
+                        icon-name={severitySortIcon}
+                        size="xx-small"
+                        alternative-text=""
+                        class="ll-head__icon"
+                    ></lightning-icon>
+                </button>
+                <span class="ll-head__cell">Message</span>
+                <span class="ll-head__cell ll-head__cell_origin">Origin</span>
+                <span class="ll-head__cell ll-head__cell_user">Logged by</span>
+            </div>
+            <span class="ll-head__spacer" aria-hidden="true"></span>
+        </div>
+
+        <!-- Loading: skeleton rows occupy the same box as real rows -->
+        <template lwc:if={loading}>
+            <c-lite-logger-skeleton
+                variant="rows"
+                count={skeletonRows}
+                label="Loading log entries…"
+            ></c-lite-logger-skeleton>
+        </template>
+
+        <template lwc:else>
+            <ul class="ll-stream" role="list" onkeydown={handleKeyDown}>
+                <template for:each={visibleRows} for:item="row">
+                    <li key={row.id} class={row.itemClass}>
+                        <div class="ll-row__wrap">
+                            <button
+                                type="button"
+                                class="ll-row"
+                                aria-expanded={row.ariaExpanded}
+                                aria-controls={row.detailId}
+                                aria-label={row.ariaLabel}
+                                data-id={row.id}
+                                onclick={handleRowClick}
+                            >
+                                <span class={row.gutterClass} aria-hidden="true"></span>
+                                <span class="ll-cell ll-cell_time">
+                                    <span class="ll-time">
+                                        <lightning-formatted-date-time
+                                            value={row.timestamp}
+                                            hour="2-digit"
+                                            minute="2-digit"
+                                            second="2-digit"
+                                            hour12="false"
+                                        ></lightning-formatted-date-time>
+                                    </span>
+                                    <span class="ll-date">
+                                        <lightning-formatted-date-time
+                                            value={row.timestamp}
+                                            month="short"
+                                            day="numeric"
+                                        ></lightning-formatted-date-time>
+                                    </span>
+                                </span>
+                                <span class="ll-cell ll-cell_sev">
+                                    <c-lite-logger-severity-badge
+                                        severity={row.rawLevel}
+                                        size="small"
+                                    ></c-lite-logger-severity-badge>
+                                </span>
+                                <span class="ll-cell ll-cell_msg">
+                                    <span class="ll-msg">{row.messagePreview}</span>
+                                    <template lwc:if={row.metaLine}>
+                                        <span class="ll-msg__meta">{row.metaLine}</span>
+                                    </template>
+                                </span>
+                                <span class="ll-cell ll-cell_origin" title={row.origin}>
+                                    <span class="ll-mono">{row.originDisplay}</span>
+                                </span>
+                                <span class="ll-cell ll-cell_user">{row.loggedBy}</span>
+                            </button>
+
+                            <div class="ll-row__menu">
+                                <lightning-button-menu
+                                    variant="bare"
+                                    icon-size="x-small"
+                                    menu-alignment="auto"
+                                    alternative-text="Entry actions"
+                                    title="Entry actions"
+                                    data-id={row.id}
+                                    onselect={handleMenuSelect}
+                                >
+                                    <lightning-menu-item
+                                        value="toggle"
+                                        label={row.toggleActionLabel}
+                                    ></lightning-menu-item>
+                                    <template lwc:if={row.recordId}>
+                                        <lightning-menu-item
+                                            value="open"
+                                            label="Open related record"
+                                        ></lightning-menu-item>
+                                    </template>
+                                    <template lwc:if={row.transactionId}>
+                                        <lightning-menu-item
+                                            value="transaction"
+                                            label="Filter to this transaction"
+                                        ></lightning-menu-item>
+                                    </template>
+                                    <lightning-menu-item value="copy" label="Copy diagnostics"></lightning-menu-item>
+                                </lightning-button-menu>
+                            </div>
+                        </div>
+
+                        <!-- Expandable detail: everything the hot-tier query returns -->
+                        <template lwc:if={row.isExpanded}>
+                            <div id={row.detailId} class="ll-detail">
+                                <p class="ll-detail__label">Full message</p>
+                                <pre class="ll-detail__message" tabindex="0">{row.message}</pre>
+
+                                <dl class="ll-detail__grid">
+                                    <template lwc:if={row.origin}>
+                                        <div class="ll-detail__pair">
+                                            <dt>Origin</dt>
+                                            <dd class="ll-mono">{row.origin}</dd>
+                                        </div>
+                                    </template>
+                                    <template lwc:if={row.exceptionType}>
+                                        <div class="ll-detail__pair">
+                                            <dt>Exception type</dt>
+                                            <dd class="ll-mono">{row.exceptionType}</dd>
+                                        </div>
+                                    </template>
+                                    <template lwc:if={row.scenario}>
+                                        <div class="ll-detail__pair">
+                                            <dt>Scenario</dt>
+                                            <dd>{row.scenario}</dd>
+                                        </div>
+                                    </template>
+                                    <template lwc:if={row.loggedBy}>
+                                        <div class="ll-detail__pair">
+                                            <dt>Logged by</dt>
+                                            <dd>{row.loggedBy}</dd>
+                                        </div>
+                                    </template>
+                                    <template lwc:if={row.transactionId}>
+                                        <div class="ll-detail__pair">
+                                            <dt>Transaction</dt>
+                                            <dd class="ll-mono">{row.transactionId}</dd>
+                                        </div>
+                                    </template>
+                                    <template lwc:if={row.recordId}>
+                                        <div class="ll-detail__pair">
+                                            <dt>Record</dt>
+                                            <dd class="ll-mono">{row.recordId}</dd>
+                                        </div>
+                                    </template>
+                                </dl>
+
+                                <template lwc:if={row.hasTags}>
+                                    <div class="ll-detail__tags">
+                                        <span class="ll-detail__label">Tags</span>
+                                        <template for:each={row.tags} for:item="tag">
+                                            <span key={tag} class="ll-tag">{tag}</span>
+                                        </template>
+                                    </div>
+                                </template>
+
+                                <div class="ll-detail__actions">
+                                    <template lwc:if={row.recordId}>
+                                        <lightning-button
+                                            variant="brand"
+                                            label="Open related record"
+                                            icon-name="utility:new_window"
+                                            data-id={row.id}
+                                            onclick={handleOpenRecord}
+                                        ></lightning-button>
+                                    </template>
+                                    <lightning-button
+                                        variant="neutral"
+                                        label="Copy diagnostics"
+                                        icon-name="utility:copy_to_clipboard"
+                                        data-id={row.id}
+                                        onclick={handleCopy}
+                                    ></lightning-button>
+                                    <template lwc:if={row.transactionId}>
+                                        <lightning-button
+                                            variant="base"
+                                            label="Filter to this transaction"
+                                            data-id={row.id}
+                                            onclick={handleFilterTransaction}
+                                        ></lightning-button>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </li>
+                </template>
+            </ul>
+
+            <!-- Pager: keeps the DOM small no matter how many rows the hot tier holds -->
+            <div class="ll-foot">
+                <p class="ll-foot__count" aria-live="polite">
+                    Showing <strong>{rangeStart}</strong>–<strong>{rangeEnd}</strong> of
+                    <strong>{total}</strong> {entryNoun}
+                </p>
+                <template lwc:if={showPager}>
+                    <div class="ll-foot__pager">
+                        <lightning-button-icon
+                            icon-name="utility:chevronleft"
+                            variant="border-filled"
+                            size="x-small"
+                            alternative-text="Previous page"
+                            title="Previous page"
+                            disabled={isFirstPage}
+                            onclick={handlePrev}
+                        ></lightning-button-icon>
+                        <span class="ll-foot__page">Page {pageNumber} / {pageCount}</span>
+                        <lightning-button-icon
+                            icon-name="utility:chevronright"
+                            variant="border-filled"
+                            size="x-small"
+                            alternative-text="Next page"
+                            title="Next page"
+                            disabled={isLastPage}
+                            onclick={handleNext}
+                        ></lightning-button-icon>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </div>
+</template>

@@ -2,11 +2,46 @@
 <LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
     <apiVersion>62.0</apiVersion>
     <isExposed>true</isExposed>
-    <masterLabel>LiteLogger Dashboard</masterLabel>
-    <description>Log summary tiles and recent hot-tier entries.</description>
+    <masterLabel>LiteLogger Console</masterLabel>
+    <description>Monitoring console: severity KPI strip, severity mix, and a filterable hot-tier entry stream.</description>
     <targets>
         <target>lightning__AppPage</target>
         <target>lightning__HomePage</target>
         <target>lightning__Tab</target>
     </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__AppPage,lightning__HomePage">
+            <property
+                name="headline"
+                type="String"
+                label="Console title"
+                description="Heading shown at the top of the console."
+                default="Log Console"
+            />
+            <property
+                name="defaultWindowDays"
+                type="String"
+                datasource="1,3,7,30"
+                label="Default summary window (days)"
+                description="Trailing window used by the KPI strip and severity mix."
+                default="7"
+            />
+            <property
+                name="defaultRowLimit"
+                type="String"
+                datasource="25,50,100,200"
+                label="Entries to load"
+                description="How many of the newest hot-tier entries are fetched (server cap is 200)."
+                default="50"
+            />
+            <property
+                name="pageSize"
+                type="String"
+                datasource="10,25,50"
+                label="Rows per page"
+                description="Rows rendered per page in the entry stream."
+                default="25"
+            />
+        </targetConfig>
+    </targetConfigs>
 </LightningComponentBundle>

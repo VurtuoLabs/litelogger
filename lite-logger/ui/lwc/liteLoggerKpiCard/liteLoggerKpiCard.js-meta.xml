@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>62.0</apiVersion>
+    <isExposed>false</isExposed>
+    <masterLabel>LiteLogger KPI Card</masterLabel>
+    <description>Dense metric tile with value, supporting text, share bar, trend indicator and its own loading state.</description>
+</LightningComponentBundle>
