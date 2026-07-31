@@ -55,6 +55,9 @@ public with sharing class LiteLoggerSettingsController {
 
   @AuraEnabled(cacheable=true)
   public static Boolean isArchiveJobScheduled() {
+      // CronTrigger is a setup object describing platform job state, not customer
+      // data. USER_MODE is deliberately not applied: it errors for users without
+      // setup access, which would break the settings page for everyone else.
     return [
         SELECT COUNT()
         FROM CronTrigger

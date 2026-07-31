@@ -16,6 +16,7 @@ public with sharing class LiteLoggerDashboardController {
       SELECT LoggingLevel__c level, COUNT(Id) total
       FROM LogEntry__c
       WHERE Timestamp__c >= :windowStart
+      WITH USER_MODE
       GROUP BY LoggingLevel__c
     ]) {
       summary.add(new LevelCount((String) result.get('level'), (Integer) result.get('total')));
@@ -32,6 +33,7 @@ public with sharing class LiteLoggerDashboardController {
         SELECT Timestamp__c, LoggingLevel__c, Message__c, OriginLocation__c, ExceptionType__c,
           RecordId__c, Tags__c, Scenario__c, TransactionId__c, LoggedBy__r.Name
         FROM LogEntry__c
+        WITH USER_MODE
         ORDER BY Timestamp__c DESC
         LIMIT :rowLimit
       ];
@@ -41,6 +43,7 @@ public with sharing class LiteLoggerDashboardController {
         RecordId__c, Tags__c, Scenario__c, TransactionId__c, LoggedBy__r.Name
       FROM LogEntry__c
       WHERE LoggingLevel__c = :level
+      WITH USER_MODE
       ORDER BY Timestamp__c DESC
       LIMIT :rowLimit
     ];
@@ -57,6 +60,7 @@ public with sharing class LiteLoggerDashboardController {
         Tags__c, Scenario__c, TransactionId__c, LoggedBy__r.Name
       FROM LogEntry__c
       WHERE RecordId__c = :recordId
+      WITH USER_MODE
       ORDER BY Timestamp__c DESC
       LIMIT :MAX_ROWS
     ];
